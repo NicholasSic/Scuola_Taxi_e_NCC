@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz NCC/Taxi</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #f0f8ff, #dfefff);
+      margin: 0;
+      padding: 40px;
+      text-align: center;
+      color: #333;
+    }
+    h1, h2, h3 { color: #003366; }
+    button {
+      margin: 12px;
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s;
+      font-weight: bold;
+    }
+    button:hover { background-color: #0056b3; }
+    button:active { transform: scale(0.97); background-color: #004080; }
+    .button-container {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    /* Cards & layout */
+    #home, #quiz, #esercitazione, #risultati, #riepilogoRisposte, #statistiche,
+#sezioneArticoli, #sezionePercorsi, #sezioneDocumenti {
+      display: none;
+      max-width: 1200px;
+      margin: auto;
+      padding: 30px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      text-align: left;
+    }
+    .domanda-card {
+      background: #ffffff;
+      border-left: 8px solid #007bff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .domanda-card h3 {
+      margin-top: 0;
+      color: #007bff;
+      font-size: 20px;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 8px;
+    }
+    .domanda-card p { font-size: 18px; margin-bottom: 20px; }
+    .risposta-button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: 2px solid #007bff;
+      background-color: white;
+      color: #007bff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .risposta-button:hover { background-color: #007bff; color: white; }
+    .corretto { color: green; font-weight: bold; }
+    .sbagliato { color: red; font-weight: bold; }
+    .result-container {
+      background-color: #f5f5f5;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+      margin-top: 20px;
+      text-align: center;
+    }
+    .argomento-errori { list-style: none; padding: 0; margin-top: 10px; }
+    .argomento-errori li { margin-bottom: 5px; font-weight: bold; }
+    .errore-alto { color: red; }
+    .errore-basso { color: orange; }
+    .promosso { color: green; font-size: 24px; font-weight: bold; }
+    .bocciato { color: red; font-size: 24px; font-weight: bold; }
+    .pulsanti-risultato button { margin: 10px 5px; padding: 10px 20px; font-weight: bold; cursor: pointer; }
+
+    /* Login overlay */
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+    #loginOverlay .panel {
+      width: 360px;
+      background: #fff;
+      padding: 22px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      text-align: left;
+    }
+    #loginOverlay input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+.percorso-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .percorso-layout {
+    grid-template-columns: 1fr; /* su mobile va in singola colonna */
+  }
+}
+
+/* Percorsi: pagina più larga e colonna immagine più ampia */
+.percorso-layout { grid-template-columns: 1.2fr 3.8fr; }
+.img-percorso {
+  display: none;
+  width: 100%;
+  min-width: 560px;     /* aumento la larghezza minima */
+  max-height: 72vh;     /* non supera ~72% dell’altezza schermo */
+  height: auto;
+  object-fit: contain;  /* mantiene proporzioni senza tagliare */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* ---- Lightbox immagine percorso ---- */
+#imgLightbox { position: fixed; inset: 0; z-index: 99999; }
+#imgLightbox .lb-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(2px); }
+#imgLightbox .lb-content {
+  position: absolute; inset: 5% 6%;
+  background: #0b0b0b; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  display: flex; flex-direction: column; align-items: center; padding: 16px;
+}
+#imgLightboxSrc { max-width: 100%; max-height: calc(100vh - 160px); border-radius: 10px; box-shadow: 0 12px 36px rgba(0,0,0,.35); }
+#imgLightbox .lb-close {
+  position: absolute; top: 10px; right: 12px; border: 0; background: rgba(255,255,255,.15); color: #fff;
+  padding: 8px 10px; border-radius: 10px; font-size: 18px; cursor: pointer;
+}
+#imgLightbox .lb-close:hover { background: rgba(255,255,255,.25); }
+#imgLightbox .lb-caption { color: #ddd; font-size: 14px; margin-top: 10px; text-align: center; max-width: 100%; }
+body.lb-open { overflow: hidden; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN overlay (correttamente nel <body>, PRIMA della Home) -->
+  <div id="loginOverlay">
+    <div class="panel">
+      <h2 style="margin:0 0 12px 0; color:#003366;">Accesso - Quiz Taxi/NCC</h2>
+      <label style="display:block; font-size:14px; margin-bottom:6px;">Email
+        <input id="loginEmail" type="email" />
+      </label>
+      <label style="display:block; font-size:14px; margin-top:10px;">Password
+        <input id="loginPassword" type="password" />
+      </label>
+      <div id="loginMsg" style="height:20px; margin-top:10px; color:#b00;"></div>
+      <div style="margin-top:14px; display:flex; gap:10px; justify-content:flex-end;">
+        <button id="loginBtn">Accedi</button>
+      </div>
+      <p style="font-size:12px; color:#666; margin-top:10px;">Se non hai un account contatta l'amministratore.</p>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="home">
+    <h1>Esame per Licenza Taxi/NCC</h1>
+    <button onclick="iniziaSimulazione()">Simulazione Esame</button>
+    <button onclick="mostraSelezioneArgomento()">Esercitazione per Argomento</button>
+    <button onclick="riprovaErrori()">Riprova solo errori</button>
+    <button onclick="mostraSezioneArticoli()">Leggi Articoli del Regolamento</button>
+    <button onclick="mostraSezionePercorsi()">Visualizza Percorsi Principali</button>
+<button class="btn" onclick="openConfluenze()">Confluenze piazze</button>
+<button class="btn" onclick="openDocumenti()">Apri Documenti PDF</button>
+    <button onclick="logout()">Esci</button>
+  </div>
+
+  <!-- Sezione Articoli -->
+  <div id="sezioneArticoli">
+    <h1>Articoli del Regolamento</h1>
+    <div id="indiceArticoli" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 8px;"></div>
+    <div id="contenutoArticolo" style="margin-bottom: 20px;">
+      <h2 id="titoloArticolo"></h2>
+      <p id="testoArticolo" style="white-space: pre-line;"></p>
+<!-- Controlli lettura vocale -->
+<div id="ttsControls" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:12px 0;">
+  <button id="ttsPlay">🔊 Leggi</button>
+  <button id="ttsPause" disabled>Pausa</button>
+  <button id="ttsStop" disabled>Stop</button>
+
+  <label style="display:flex; align-items:center; gap:6px; margin-left:10px;">
+    Voce:
+    <select id="ttsVoice" style="min-width:220px;"></select>
+  </label>
+
+  <label style="display:flex; align-items:center; gap:6px;">
+    Velocità:
+    <input id="ttsRate" type="range" min="0.6" max="1.4" step="0.1" value="1">
+    <span id="ttsRateVal">1.0x</span>
+  </label>
+</div>
+    </div>
+    <div id="navigazioneArticoli" style="text-align:center; margin-bottom: 20px;">
+      <button id="prevArticolo">← Articolo Precedente</button>
+      <button id="nextArticolo">Articolo Successivo →</button>
+    </div>
+    <button id="tornaHomeDaArticoli" style="display: block; margin: auto;">Torna alla Home</button>
+  </div>
+
+  <!-- Sezione Percorsi -->
+  <div id="sezionePercorsi">
+    <h1>Percorsi Principali</h1>
+    <div id="indiceCategoriePercorsi" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
+    <button id="btnTornaCategorie" style="display:none; margin-bottom: 10px;">← Torna a tutte le categorie</button>
+    <div id="indicePercorsi" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px; display:none;"></div>
+    <div id="contenutoPercorso" style="margin-top: 20px; display:none;">
+  <div class="percorso-layout">
+    <!-- Colonna sinistra: titolo + tappe -->
+    <div>
+      <h2 id="titoloPercorso"></h2>
+      <ul id="listaTappe"></ul>
+    </div>
+
+  <!-- Colonna destra: viewer mappa -->
+<div>
+  <div id="osdPercorso"
+       style="width:100%; min-width:560px; height:72vh; border:1px solid #ddd; border-radius:12px;"></div>
+  <figcaption id="didascaliaPercorso" style="color:#555; font-size:14px; margin-top:8px;"></figcaption>
+</div>
+  </div>
+</div>
+    <div id="navigazionePercorsi" style="text-align:center; margin-top: 10px; display:none;">
+      <button id="prevPercorso">← Percorso Precedente</button>
+      <button id="nextPercorso">Percorso Successivo →</button>
+    </div>
+    <button id="tornaHomeDaPercorsi" style="display: block; margin: 20px auto 0;">Torna alla Home</button>
+  </div>
+
+<!-- Sezione Documenti PDF -->
+<div id="sezioneDocumenti" style="display:none; padding:24px 16px;">
+  <button class="btn" onclick="chiudiDocumenti()">← Torna alla Home</button>
+  <h2 style="margin-top:16px;">Documenti PDF</h2>
+
+  <div style="margin:12px 0;">
+    <input id="docSearch" type="search" placeholder="Cerca documento…"
+           oninput="filterDocs(this.value)"
+           style="width:100%;max-width:420px;padding:10px;border-radius:8px;border:1px solid #ccd;">
+  </div>
+
+  <div id="docList"
+       style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;"></div>
+
+  <div id="docPreview" style="margin-top:16px;display:none;">
+    <h3 id="docTitle" style="margin:8px 0;"></h3>
+    <iframe id="docFrame" title="Anteprima PDF"
+            style="width:100%;height:70vh;border:1px solid #e2e2e2;border-radius:10px;"></iframe>
+  </div>
+</div>
+
+
+<!-- Sezione Confluenze -->
+<section id="sezioneConfluenze" style="display:none;padding:24px 16px;">
+  <button class="btn secondary" onclick="tornaAllaHome()">← Torna alla Home</button>
+  <h2 style="margin:12px 0;">Confluenze delle piazze</h2>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:8px 0;">
+   <label>Seleziona piazza:</label>
+<div style="display:flex;flex-direction:column;gap:6px;">
+  <input id="searchPiazza" type="search" placeholder="Cerca piazza..."
+         oninput="filterPiazze(this.value)"
+         style="padding:6px 8px;border-radius:6px;border:1px solid #ccc;max-width:260px;">
+  <select id="selPiazza" onchange="renderConfluenzeStudio()"></select>
+</div>
+
+    <button class="btn" onclick="startConfluenzeTest()">Avvia test su questa piazza</button>
+    <button class="btn secondary" onclick="startConfluenzeTestRandom()">Test casuale</button>
+  </div>
+
+  <!-- Pannello studio -->
+  <div id="confStudio" style="margin-top:12px;">
+    <h3 id="confPiazzaTitle" style="margin:8px 0;"></h3>
+    <ul id="confLista" style="padding-left:20px;line-height:1.7;"></ul>
+  </div>
+
+  <hr style="margin:16px 0;">
+
+  <!-- Pannello test -->
+  <div id="confTest" style="display:none;">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <h3 id="confTestTitle" style="margin:8px 0;"></h3>
+      <button class="btn secondary" onclick="riempiConSuggerimenti()">Suggerisci (50%)</button>
+      <button class="btn secondary" onclick="svuotaRisposta()">Svuota input</button>
+    </div>
+
+    <p style="margin:6px 0 8px;">Scrivi le strade che confluiscono, separate da virgola. Es.: <i>“Via Torino, Via Orefici, Corso Europa”</i></p>
+    <textarea id="confInput" rows="4" style="width:100%;max-width:800px;padding:10px;border-radius:8px;border:1px solid #ccd;"></textarea>
+
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="correggiConfluenze()">Correggi</button>
+      <button class="btn secondary" onclick="mostraSoluzione()">Mostra soluzione</button>
+      <button class="btn secondary" onclick="nuovoTestStessa()">Nuova prova stessa piazza</button>
+      <button class="btn secondary" onclick="startConfluenzeTestRandom()">Nuova prova casuale</button>
+<button class="btn secondary" onclick="tornaAlloStudio()">Torna allo studio</button>
+    </div>
+
+    <div id="confEsito" style="margin-top:12px;"></div>
+  </div>
+</section>
+
+  <!-- Quiz & Esercitazione -->
+  <div id="quiz">
+    <button onclick="tornaAllaHome()">Torna alla Home</button>
+    <p id="timer"></p>
+    <div id="contenitoreDomanda"></div>
+    <div id="riepilogo"></div>
+  </div>
+
+  <div id="esercitazione">
+    <button onclick="tornaAllaHome()">Torna alla Home</button>
+    <h2>Esercitazione: <span id="titoloArgomento"></span></h2>
+    <div id="contenitoreEsercitazione"></div>
+    <div id="riepilogoEsercitazione"></div>
+  </div>
+
+  <div id="risultati"></div>
+  <div id="riepilogoRisposte"></div>
+
+  <div id="selezioneLinguaSimulazione" style="display:none; padding: 20px; text-align: center;">
+    <h2>Seleziona la lingua per la simulazione</h2>
+    <button onclick="selezionaLingua('INGLESE')">Inglese</button>
+    <button onclick="selezionaLingua('SPAGNOLO')">Spagnolo</button>
+    <button onclick="selezionaLingua('TEDESCO')">Tedesco</button>
+    <button onclick="selezionaLingua('FRANCESE')">Francese</button>
+    <button onclick="tornaAllaHome()">Annulla</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./users.js"></script>
+  <script src="domande.js"></script>
+  <script src="Articoli.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
+<script src="Percorsi.js"></script>
+<script src="confluenze.js"></script>
+
+
+  <script>
+// ====== Viewer OpenSeadragon per Percorsi ======
+let osdViewer = null;
+let osdSvg = null;
+let _captureMode = false;
+let _clickHandlerBound = false;
+
+/** Inizializza UNA volta il viewer del riquadro mappa dei percorsi */
+function ensurePercorsoViewer() {
+  if (osdViewer) return;
+  osdViewer = OpenSeadragon({
+    id: "osdPercorso",
+    prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
+    tileSources: "assets/milano/milano.dzi",
+    showNavigator: true,
+    minZoomImageRatio: 0.8,
+    maxZoomPixelRatio: 8
+  });
+
+  // Quando l'immagine è aperta, prepara l’SVG overlay con un viewBox coerente
+  osdViewer.addHandler("open", () => {
+    const item = osdViewer.world.getItemAt(0);
+    if (!item) return;
+
+    // Dimensioni "pixel immagine" della DZI
+    const size   = item.getContentSize(); // { x: width, y: height }
+    const bounds = item.getBounds();      // rettangolo dell'immagine in coordinate viewport
+
+    // Crea (una volta) un contenitore DIV che seguirà l'immagine
+    let overlayDiv = document.getElementById('osdSvgOverlay');
+    if (!overlayDiv) {
+      overlayDiv = document.createElement('div');
+      overlayDiv.id = 'osdSvgOverlay';
+      overlayDiv.style.width = '100%';
+      overlayDiv.style.height = '100%';
+      overlayDiv.style.pointerEvents = 'none';
+
+      // Aggancia il DIV all'immagine: si scalerà e muoverà con lei
+      osdViewer.addOverlay({
+        element: overlayDiv,
+        location: bounds,
+        placement: OpenSeadragon.Placement.TOP_LEFT
+      });
+    }
+
+    // Crea/recupera l'SVG interno (si disegna qui dentro)
+    osdSvg = overlayDiv.querySelector('svg');
+    if (!osdSvg) {
+      osdSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      osdSvg.setAttribute('width',  '100%');
+      osdSvg.setAttribute('height', '100%');
+      osdSvg.setAttribute('preserveAspectRatio','none');
+      overlayDiv.appendChild(osdSvg);
+    }
+
+    // Pulisci e imposta viewBox in pixel immagine
+    while (osdSvg.firstChild) osdSvg.removeChild(osdSvg.firstChild);
+    osdSvg.setAttribute('viewBox', `0 0 ${size.x} ${size.y}`);
+  });
+
+  // Se zoom/pan, non serve ridisegnare (abbiamo vector-effect)
+}
+
+/** Pulisce l’overlay SVG */
+function clearPercorsoOverlay() {
+  if (!osdSvg) return;
+  while (osdSvg.firstChild) osdSvg.removeChild(osdSvg.firstChild);
+}
+
+/** Disegna una polyline in PIXEL IMMAGINE.
+ *  `puntiNorm` = array di [nx,ny] (0..1) normalizzati rispetto all'immagine.
+ */
+function drawPercorsoPolyline(puntiNorm) {
+  if (!osdViewer || !osdSvg || !puntiNorm || !puntiNorm.length) return;
+
+  const item = osdViewer.world.getItemAt(0);
+  if (!item) return;
+
+  const img = item.getContentSize(); // {x: W, y: H}
+  const W = img.x, H = img.y;
+
+  // Converti punti normalizzati -> pixel immagine
+  const ptsImg = puntiNorm.map(([nx, ny]) => [nx * W, ny * H]);
+
+  // 1) Polyline
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  const ptsAttr = ptsImg.map(([x, y]) => `${x},${y}`).join(" ");
+  poly.setAttribute("points", ptsAttr);
+  poly.setAttribute("fill", "none");
+  poly.setAttribute("stroke", "#ff1744");          // rosso ben visibile
+  poly.setAttribute("stroke-width", "5");          // spesso, visibile subito
+  poly.setAttribute("stroke-linejoin", "round");
+  poly.setAttribute("stroke-linecap", "round");
+  poly.setAttribute("vector-effect", "non-scaling-stroke"); // spessore costante
+  osdSvg.appendChild(poly);
+
+  // 2) Cerchietti di debug sui punti (così la vedi comunque)
+  for (const [x, y] of ptsImg) {
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", x);
+    c.setAttribute("cy", y);
+    c.setAttribute("r", "4");
+    c.setAttribute("fill", "#2979ff"); // blu
+    c.setAttribute("stroke", "#ffffff");
+    c.setAttribute("stroke-width", "1.5");
+    c.setAttribute("vector-effect", "non-scaling-stroke");
+    osdSvg.appendChild(c);
+  }
+
+  console.log("[OSD] Polyline disegnata:", puntiNorm.length, "punti");
+}
+
+/** Utility: mostra un percorso (oggetto) sulla mappa */
+function showPercorsoOnMap(percorso) {
+console.log('[showPercorsoOnMap]', percorso?.nomePercorso);
+  ensurePercorsoViewer();
+  if (!osdViewer) return;
+
+  // ✅ PULISCI SEMPRE l'overlay: evita che resti il tracciato del percorso precedente
+  clearPercorsoOverlay();
+
+  // Accetta sia "coords" (nuovo) che nomi legacy eventualmente presenti
+  const pts = (percorso && Array.isArray(percorso.coords) && percorso.coords.length)
+    ? percorso.coords
+    : (Array.isArray(percorso.puntiMappa) && percorso.puntiMappa.length
+        ? percorso.puntiMappa
+        : (Array.isArray(percorso.punti) && percorso.punti.length ? percorso.punti : [])
+      );
+console.log('[showPercorsoOnMap] punti trovati:', Array.isArray(pts) ? pts.length : 0);
+
+  // Se non ci sono punti, riportiamo la mappa alla vista iniziale e usciamo
+  if (!pts || !pts.length) {
+    try { osdViewer.viewport.goHome(true); } catch(_) {}
+    console.warn("Nessun punto per questo percorso:", percorso?.nomePercorso || '(senza nome)');
+    return;
+  }
+
+  // Se l'immagine DZI non è ancora pronta, riprova a breve
+  if (!osdViewer.world.getItemAt(0)) {
+    setTimeout(() => showPercorsoOnMap(percorso), 150);
+    return;
+  }
+
+  // Disegna il tracciato
+  drawPercorsoPolyline(pts);
+
+  // Inquadra la bounding box del percorso
+  try {
+    const item = osdViewer.world.getItemAt(0);
+    const { x: W, y: H } = item.getContentSize();
+    const xs = pts.map(p => p[0]);
+    const ys = pts.map(p => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+    const rectImg = new OpenSeadragon.Rect(
+      minX * W, minY * H,
+      (maxX - minX) * W, (maxY - minY) * H
+    );
+    const rectVp = osdViewer.viewport.imageToViewportRectangle(rectImg);
+    osdViewer.viewport.fitBoundsWithConstraints(rectVp, true);
+  } catch (e) {
+    console.warn('fitBounds error:', e);
+    try { osdViewer.viewport.goHome(true); } catch(_) {}
+  }
+}
+
+// === Cattura coordinate (come avevi) ===
+function enablePointCapture(active = true) {
+  ensurePercorsoViewer();
+  if (!osdViewer) return;
+  _captureMode = !!active;
+
+  if (!_clickHandlerBound) {
+    _clickHandlerBound = true;
+    osdViewer.addHandler('canvas-click', (ev) => {
+      if (!_captureMode) return;
+      ev.preventDefaultAction = true;
+
+      const webPoint = ev.position;
+      const vpPoint  = osdViewer.viewport.pointFromPixel(webPoint);
+      const imgPoint = osdViewer.viewport.viewportToImageCoordinates(vpPoint);
+      const item     = osdViewer.world.getItemAt(0);
+      if (!item) return;
+
+      const size = item.getContentSize();
+      const nx = +(imgPoint.x / size.x).toFixed(6);
+      const ny = +(imgPoint.y / size.y).toFixed(6);
+
+      console.log('PUNTO:', [nx, ny]);
+      try { navigator.clipboard.writeText(`[${nx}, ${ny}]`); } catch(_) {}
+
+      // puntino visivo (DOM overlay, non SVG)
+      try {
+        const vp = osdViewer.viewport.imageToViewportCoordinates(imgPoint);
+        const dot = document.createElement('div');
+        dot.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #d00;box-shadow:0 0 2px rgba(0,0,0,.5);pointer-events:none;';
+        osdViewer.addOverlay({ element: dot, location: vp, placement: OpenSeadragon.Placement.CENTER });
+      } catch(e) { /* ignora */ }
+    });
+  }
+
+  console.log(_captureMode ? '🟢 CATTURA PUNTI ATTIVA' : '⚪️ CATTURA PUNTI SPENTA');
+}
+function disablePointCapture() { _captureMode = false; console.log('⚪️ CATTURA PUNTI SPENTA'); }
+
+
+
+    // --- Riferimenti DOM e stato ---
+    const home = document.getElementById("home");
+    const quiz = document.getElementById("quiz");
+    const esercitazione = document.getElementById("esercitazione");
+    const contenitoreDomanda = document.getElementById("contenitoreDomanda");
+    const contenitoreEsercitazione = document.getElementById("contenitoreEsercitazione");
+    const risultati = document.getElementById("risultati");
+    const riepilogo = document.getElementById("riepilogo");
+    const riepilogoEsercitazione = document.getElementById("riepilogoEsercitazione");
+    const riepilogoRisposte = document.getElementById("riepilogoRisposte");
+
+    let timerInterval;
+    let tempoRimasto = 1800;
+    let domandeSimulazione = [];
+    let linguaSimulazione = null;
+    let indiceDomanda = 0;
+    let erroriTotali = 0;
+    let erroriPerArgomento = { GEOGRAFIA: 0, INGLESE: 0, SPAGNOLO: 0, FRANCESE: 0, TEDESCO: 0, NORMATIVA: 0, REGOLAMENTO: 0 };
+    let risposteDate = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      home.style.display = "block";
+    });
+
+    function tornaAllaHome() {
+      if (confirm("Sei sicuro di voler tornare alla Home? I progressi andranno persi.")) {
+        location.reload();
+      }
+    }
+
+    function iniziaSimulazione() {
+      home.style.display = "none";
+      document.getElementById("selezioneLinguaSimulazione").style.display = "block";
+    }
+
+    function selezionaLingua(lingua) {
+      linguaSimulazione = lingua;
+      document.getElementById("selezioneLinguaSimulazione").style.display = "none";
+      avviaSimulazioneConLingua();
+    }
+
+    function avviaSimulazioneConLingua() {
+      clearInterval(timerInterval);
+      tempoRimasto = 1800;
+      indiceDomanda = 0;
+      erroriTotali = 0;
+      erroriPerArgomento = { GEOGRAFIA: 0, INGLESE: 0, SPAGNOLO: 0, TEDESCO: 0, FRANCESE: 0, NORMATIVA: 0, REGOLAMENTO: 0 };
+      risposteDate = [];
+      domandeSimulazione = estraiDomandeSimulazione(linguaSimulazione);
+
+      risultati.style.display = "none";
+      riepilogoRisposte.style.display = "none";
+      quiz.style.display = "block";
+
+      mostraDomanda();
+      avviaTimer();
+    }
+
+    function estraiDomandeSimulazione(lingua) {
+      let domandeUsateRecentemente = JSON.parse(localStorage.getItem("domandeUsateRecentemente")) || [];
+      const perArgomento = { GEOGRAFIA: [], NORMATIVA: [], REGOLAMENTO: [] };
+      perArgomento[lingua] = [];
+      tutteLeDomande.forEach(d => {
+        if (d.argomento === "GEOGRAFIA" || d.argomento === "NORMATIVA" || d.argomento === "REGOLAMENTO") {
+          perArgomento[d.argomento].push(d);
+        } else if (d.argomento === lingua) {
+          perArgomento[lingua].push(d);
+        }
+      });
+
+      let scelte = [];
+      Object.keys(perArgomento).forEach(arg => {
+        if (perArgomento[arg].length > 0) {
+          let disponibili = perArgomento[arg].filter(d => !domandeUsateRecentemente.includes(d.domanda));
+          if (disponibili.length < 4) disponibili = perArgomento[arg];
+          scelte = scelte.concat(disponibili.sort(() => 0.5 - Math.random()).slice(0, 4));
+        }
+      });
+
+      // ✅ ORDINA PER BLOCCHI: GEO → NORM → REG → LINGUA
+const geo  = scelte.filter(d => d.argomento === "GEOGRAFIA");
+const norm = scelte.filter(d => d.argomento === "NORMATIVA");
+const reg  = scelte.filter(d => d.argomento === "REGOLAMENTO");
+const lang = scelte.filter(d => d.argomento === lingua);
+
+// mantieni l’ordine dei blocchi; dentro ogni blocco l’ordine rimane casuale
+const ordered = [...geo, ...norm, ...reg, ...lang];
+
+// (di norma sono già 16 esatte; taglio di sicurezza)
+return ordered.slice(0, 16);
+    }
+
+    function mostraDomanda() {
+      if (indiceDomanda >= domandeSimulazione.length) return mostraRisultati();
+      const d = domandeSimulazione[indiceDomanda];
+      contenitoreDomanda.innerHTML = `
+        <div class="domanda-card">
+          <h3>${indiceDomanda + 1}/16 - ${d.argomento}</h3>
+          <p>${d.domanda}</p>
+          ${d.risposte.map((r, i) => `<button class="risposta-button" onclick="validaRisposta(${i})">${r}</button>`).join("")}
+          <div id="feedback" style="margin-top:10px;"></div>
+        </div>`;
+      aggiornaRiepilogo();
+    }
+
+    function aggiornaStatisticheDomanda(domanda) {
+      const stats = JSON.parse(localStorage.getItem("statisticheErrori")) || {};
+      stats[domanda] = (stats[domanda] || 0) + 1;
+      localStorage.setItem("statisticheErrori", JSON.stringify(stats));
+
+      const errorStats = JSON.parse(localStorage.getItem("errorStats")) || {};
+      errorStats[domanda] = (errorStats[domanda] || 0) + 1;
+      localStorage.setItem("errorStats", JSON.stringify(errorStats));
+    }
+
+    function validaRisposta(scelta) {
+      const d = domandeSimulazione[indiceDomanda];
+      const feedback = document.getElementById("feedback");
+      const corretta = scelta === d.corretta;
+      feedback.innerHTML = corretta
+        ? "<p class='corretto'>Corretto!</p>"
+        : `<p class='sbagliato'>Sbagliato! Corretta: ${d.risposte[d.corretta]}</p>`;
+      if (!corretta) {
+        erroriTotali++;
+        erroriPerArgomento[d.argomento]++;
+        aggiornaStatisticheDomanda(d.domanda);
+      }
+      risposteDate.push({ ...d, sceltaUtente: scelta });
+      indiceDomanda++;
+      setTimeout(mostraDomanda, 1000);
+    }
+
+    function mostraRisultati() {
+      let domandeUsateRecentemente = JSON.parse(localStorage.getItem("domandeUsateRecentemente")) || [];
+      domandeSimulazione.forEach(d => {
+        if (!domandeUsateRecentemente.includes(d.domanda)) domandeUsateRecentemente.push(d.domanda);
+      });
+      if (domandeUsateRecentemente.length > 50) {
+        domandeUsateRecentemente = domandeUsateRecentemente.slice(domandeUsateRecentemente.length - 50);
+      }
+      localStorage.setItem("domandeUsateRecentemente", JSON.stringify(domandeUsateRecentemente));
+
+      quiz.style.display = "none";
+      risultati.style.display = "block";
+
+const bocciato = erroriTotali > 4 || Object.values(erroriPerArgomento).some(e => e > 2);
+
+risultati.innerHTML = `
+  <div class="result-container">
+    <h2>Test completato!</h2>
+    <p><strong>Domande completate:</strong> ${indiceDomanda}/16</p>
+    <p><strong>Errori totali:</strong> ${erroriTotali}</p>
+    <ul class="argomento-errori">
+      ${Object.entries(erroriPerArgomento).map(([arg, count]) =>
+        `<li class="${count > 2 ? 'errore-alto' : count > 0 ? 'errore-basso' : 'corretto'}">${arg}: ${count} errori</li>`
+      ).join("")}
+    </ul>
+    <h3 class="${bocciato ? 'bocciato' : 'promosso'}">
+      ${bocciato ? "BOCCIATO" : "PROMOSSO"}
+    </h3>
+    <div class="pulsanti-risultato">
+      <button onclick="iniziaSimulazione()">Ricomincia</button>
+      <button onclick="mostraRiepilogoRisposte()">Rivedi Risposte</button>
+      <button onclick="tornaAllaHome()">Torna alla Home</button>
+    </div>
+  </div>`;
+      clearInterval(timerInterval);
+    }
+
+    function verdetto() {
+      const erroreGrave = Object.values(erroriPerArgomento).some(e => e > 2);
+      return erroriTotali > 4 || erroreGrave ? "BOCCIATO" : "PROMOSSO";
+    }
+
+    function mostraRiepilogoRisposte() {
+      quiz.style.display = "none";
+      risultati.style.display = "none";
+      riepilogoRisposte.style.display = "block";
+
+      const html = risposteDate.map((d, i) => {
+  const corretta = d.corretta === d.sceltaUtente;
+  const bg = corretta ? '#e8f8e8' : '#ffe5e5';
+  const color = corretta ? 'green' : 'red';
+  return `
+    <div style="border:1px solid #ccc; margin:10px; padding:10px; background:${bg};">
+      <strong>${i + 1}) ${d.domanda}</strong><br>
+      Tua risposta:
+      <span style="color:${color};">
+        ${d.risposte[d.sceltaUtente] || "Nessuna"}
+      </span><br>
+      Risposta corretta: <strong>${d.risposte[d.corretta]}</strong>
+    </div>`;
+}).join("");
+
+riepilogoRisposte.innerHTML = `<h3>Riepilogo Risposte</h3>${html}<button onclick="location.reload()">Torna alla Home</button>`;
+    }
+
+    function aggiornaRiepilogo() {
+  const items = Object.entries(erroriPerArgomento)
+    .map(([arg, err]) => `<li style="color:${err > 0 ? 'red' : 'green'}">${arg}: ${err} errori</li>`)
+    .join("");
+
+  riepilogo.innerHTML = `
+    <p>Domande completate: ${indiceDomanda}/16</p>
+    <p>Errori totali: ${erroriTotali}</p>
+    <ul>${items}</ul>`;
+}
+
+    function avviaTimer() {
+  const timer = document.getElementById("timer");
+  timerInterval = setInterval(() => {
+    tempoRimasto--;
+    const min = String(Math.floor(tempoRimasto / 60)).padStart(2, "0");
+    const sec = String(tempoRimasto % 60).padStart(2, "0");
+    timer.textContent = `Tempo: ${min}:${sec}`;
+    if (tempoRimasto <= 0) {
+      clearInterval(timerInterval);
+      mostraRisultati();
+    }
+  }, 1000);
+}
+
+    // ----------------------------- ESERCITAZIONE -----------------------------
+    let domandeArgomento = [];
+    let indiceEsercitazione = 0;
+    let risposteEsercitazioneDate = [];
+
+function riprovaErrori() {
+  const erroriSalvati = JSON.parse(localStorage.getItem("errorStats"));
+  if (!erroriSalvati || Object.keys(erroriSalvati).length === 0) {
+    alert("Non ci sono errori salvati.");
+    return;
+  }
+
+  // Nascondi tutto, mostra solo l'area esercitazione
+  home.style.display = "none";
+  quiz.style.display = "none";
+  risultati.style.display = "none";
+  riepilogoRisposte.style.display = "none";
+  esercitazione.style.display = "block";
+  document.getElementById('selezioneLinguaSimulazione').style.display = "none";
+  document.getElementById('sezioneArticoli').style.display = "none";
+  document.getElementById('sezionePercorsi').style.display = "none";
+
+  // Conta errori per argomento
+  const argomentiConErrori = {};
+  Object.keys(erroriSalvati).forEach(domanda => {
+    const d = tutteLeDomande.find(q => q.domanda === domanda);
+    if (d) {
+      argomentiConErrori[d.argomento] = (argomentiConErrori[d.argomento] || 0) + 1;
+    }
+  });
+
+  if (Object.keys(argomentiConErrori).length === 0) {
+    alert("Non ci sono errori da riprovare.");
+    return;
+  }
+
+  contenitoreEsercitazione.innerHTML = `
+    <h2>Riprova solo errori - Seleziona argomento</h2>
+    <div class="button-container">
+      ${Object.entries(argomentiConErrori).map(([arg, count]) => 
+        `<div style="margin-bottom: 20px;">
+          <button style="display:block; width: 220px; margin-bottom: 6px;" onclick="riprovaErroriPerArgomento('${arg}')">${arg} (${count} errori)</button>
+          <button style="display:block; width: 220px;" onclick="resetErroriPerArgomento('${arg}')">Reset ${arg}</button>
+        </div>`
+      ).join("")}
+    </div>
+    <div style="text-align:center; margin-top:12px;">
+      <button onclick="resetErrori()">Svuota TUTTI gli errori</button>
+      <button onclick="tornaAllaHome()">Annulla</button>
+    </div>
+  `;
+}
+
+function riprovaErroriPerArgomento(argomento) {
+  const erroriSalvati = JSON.parse(localStorage.getItem("errorStats")) || {};
+  const domandeErrore = tutteLeDomande.filter(d => 
+    d.argomento === argomento && erroriSalvati[d.domanda]
+  );
+
+  if (domandeErrore.length === 0) {
+    alert(`Non ci sono errori salvati per l'argomento ${argomento}.`);
+    return;
+  }
+
+  // Prepara un'esercitazione SOLO con le domande in errore di quell'argomento (mischiate)
+  home.style.display = "none";
+  esercitazione.style.display = "block";
+  contenitoreEsercitazione.innerHTML = "";
+  domandeArgomento = domandeErrore.sort(() => Math.random() - 0.5);
+  indiceEsercitazione = 0;
+  risposteEsercitazioneDate = [];
+  document.getElementById("titoloArgomento").textContent = `Solo errori: ${argomento}`;
+  mostraDomandaEsercitazione();
+}
+
+function resetErrori() {
+  if (confirm("Sei sicuro di voler azzerare tutti gli errori salvati?")) {
+    localStorage.removeItem("errorStats");
+    alert("Tutti gli errori sono stati azzerati.");
+    tornaAllaHome();
+    // in alternativa, puoi richiamare riprovaErrori(); per restare nella schermata errori aggiornata
+  }
+}
+
+function resetErroriPerArgomento(argomento) {
+  if (confirm(`Sei sicuro di voler azzerare gli errori per l'argomento ${argomento}?`)) {
+    let errorStats = JSON.parse(localStorage.getItem("errorStats")) || {};
+    for (const domanda in errorStats) {
+      const d = tutteLeDomande.find(q => q.domanda === domanda);
+      if (d && d.argomento === argomento) {
+        delete errorStats[domanda];
+      }
+    }
+    localStorage.setItem("errorStats", JSON.stringify(errorStats));
+    alert(`Errori per l'argomento ${argomento} azzerati.`);
+    riprovaErrori();
+  }
+}
+
+    function mostraSelezioneArgomento() {
+      home.style.display = "none";
+      const categorie = ["GEOGRAFIA", "INGLESE", "SPAGNOLO", "TEDESCO", "FRANCESE", "NORMATIVA", "REGOLAMENTO"];
+      esercitazione.style.display = "block";
+      contenitoreEsercitazione.innerHTML = `
+        <h2>Scegli un argomento</h2>
+        ${categorie.map(arg => `<button onclick="iniziaEsercitazione('${arg}')">${arg}</button>`).join("")}
+      `;
+    }
+
+    function iniziaEsercitazione(argomento) {
+      domandeArgomento = tutteLeDomande.filter(d => d.argomento === argomento)
+                                       .sort(() => Math.random() - 0.5);
+      indiceEsercitazione = 0;
+      risposteEsercitazioneDate = [];
+      document.getElementById("titoloArgomento").textContent = argomento;
+      mostraDomandaEsercitazione();
+    }
+
+    function mostraDomandaEsercitazione() {
+      if (indiceEsercitazione >= domandeArgomento.length) {
+        contenitoreEsercitazione.innerHTML = `
+          <h3>Hai completato l’argomento.</h3>
+          <button onclick="mostraSelezioneArgomento()">Torna alla selezione argomenti</button>
+        `;
+        return;
+      }
+      const d = domandeArgomento[indiceEsercitazione];
+      contenitoreEsercitazione.innerHTML = `
+        <div class="domanda-card">
+          <h3>${indiceEsercitazione + 1}/${domandeArgomento.length} - ${d.argomento}</h3>
+          <p>${d.domanda}</p>
+          ${d.risposte.map((r, i) => `<button class="risposta-button" onclick="validaRispostaEsercitazione(${i})">${r}</button>`).join("")}
+          <div id="feedbackEsercitazione" style="margin-top:10px;"></div>
+        </div>
+      `;
+      riepilogoEsercitazione.innerHTML = `<p>Domande completate: ${indiceEsercitazione}</p>`;
+    }
+
+    function validaRispostaEsercitazione(scelta) {
+      const d = domandeArgomento[indiceEsercitazione];
+      const feedback = document.getElementById("feedbackEsercitazione");
+      const corretta = scelta === d.corretta;
+
+      if (corretta) {
+        feedback.innerHTML = "<p class='corretto'>Corretto!</p>";
+        let errorStats = JSON.parse(localStorage.getItem("errorStats")) || {};
+        if (errorStats[d.domanda]) {
+          delete errorStats[d.domanda];
+          localStorage.setItem("errorStats", JSON.stringify(errorStats));
+        }
+      } else {
+        feedback.innerHTML = `<p class='sbagliato'>Sbagliato! Corretta: ${d.risposte[d.corretta]}</p>`;
+        let errorStats = JSON.parse(localStorage.getItem("errorStats")) || {};
+        errorStats[d.domanda] = (errorStats[d.domanda] || 0) + 1;
+        localStorage.setItem("errorStats", JSON.stringify(errorStats));
+      }
+
+      risposteEsercitazioneDate.push({ ...d, sceltaUtente: scelta });
+      indiceEsercitazione++;
+      setTimeout(() => {
+        if (indiceEsercitazione >= domandeArgomento.length) mostraRisultatiEsercitazione();
+        else mostraDomandaEsercitazione();
+      }, 1500);
+    }
+
+    function mostraRisultatiEsercitazione() {
+      esercitazione.style.display = "none";
+      risultati.style.display = "block";
+
+      const totDomande = risposteEsercitazioneDate.length;
+      const errori = risposteEsercitazioneDate.filter(d => d.sceltaUtente !== d.corretta).length;
+      const corrette = totDomande - errori;
+
+      risultati.innerHTML = `
+        <div class="result-container">
+          <h2>Fine Esercitazione: ${document.getElementById("titoloArgomento").textContent}</h2>
+          <p><strong>Domande totali:</strong> ${totDomande}</p>
+          <p><strong>Risposte corrette:</strong> ${corrette}</p>
+          <p><strong>Risposte sbagliate:</strong> ${errori}</p>
+          <div class="pulsanti-risultato">
+            <button onclick="riprovaErrori()">Torna alla lista errori</button>
+            <button onclick="mostraRiepilogoErroriEsercitazione()">Rivedi Domande Sbagliate</button>
+            <button onclick="tornaAllaHome()">Torna alla Home</button>
+          </div>
+        </div>`;
+    }
+
+    function mostraRiepilogoErroriEsercitazione() {
+      risultati.style.display = "none";
+      riepilogoRisposte.style.display = "block";
+      const errori = risposteEsercitazioneDate.filter(d => d.sceltaUtente !== d.corretta);
+      if (errori.length === 0) {
+        riepilogoRisposte.innerHTML = `
+          <h3>Non ci sono risposte sbagliate da rivedere!</h3>
+          <button onclick="tornaAllaHome()">Torna alla Home</button>`;
+        return;
+      }
+      const html = errori.map((d, i) => `
+        <div style="border:1px solid #ccc; margin:10px; padding:10px; background:#ffe5e5;">
+          <strong>${i + 1}) ${d.domanda}</strong><br>
+          Tua risposta: <span style="color:red;">${d.risposte[d.sceltaUtente] || "Nessuna"}</span><br>
+          Risposta corretta: <strong>${d.risposte[d.corretta]}</strong>
+        </div>`).join("");
+      riepilogoRisposte.innerHTML = `
+        <h3>Riepilogo Domande Sbagliate</h3>${html}
+        <button onclick="mostraRisultatiEsercitazione()">Torna ai Risultati</button>
+        <button onclick="tornaAllaHome()">Torna alla Home</button>`;
+    }
+
+    // --------------------- Articoli (navigazione) ---------------------
+    let indiceArticoloCorrente = 0;
+    function generaIndiceArticoli() {
+      const indiceDiv = document.getElementById('indiceArticoli');
+      indiceDiv.innerHTML = '';
+      tuttiGliArticoli.forEach((articolo, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = `${articolo.numeroArticolo} - ${articolo.titolo}`;
+        btn.style.display = 'block';
+        btn.style.marginBottom = '5px';
+        btn.style.width = '100%';
+        btn.style.textAlign = 'left';
+        btn.onclick = () => mostraArticolo(index);
+        indiceDiv.appendChild(btn);
+      });
+    }
+    function mostraArticolo(indice) {
+      indiceArticoloCorrente = indice;
+      const articolo = tuttiGliArticoli[indice];
+      document.getElementById('titoloArticolo').textContent = `${articolo.numeroArticolo} - ${articolo.titolo}`;
+      document.getElementById('testoArticolo').textContent = articolo.testo;
+    }
+    document.getElementById('prevArticolo').addEventListener('click', () => {
+      if (indiceArticoloCorrente > 0) mostraArticolo(indiceArticoloCorrente - 1);
+    });
+    document.getElementById('nextArticolo').addEventListener('click', () => {
+      if (indiceArticoloCorrente < tuttiGliArticoli.length - 1) mostraArticolo(indiceArticoloCorrente + 1);
+    });
+    document.getElementById('tornaHomeDaArticoli').addEventListener('click', () => {
+      document.getElementById('sezioneArticoli').style.display = 'none';
+      document.getElementById('home').style.display = 'block';
+    });
+    function mostraSezioneArticoli() {
+      document.getElementById('home').style.display = 'none';
+      document.getElementById('quiz').style.display = 'none';
+      document.getElementById('esercitazione').style.display = 'none';
+      document.getElementById('risultati').style.display = 'none';
+      document.getElementById('riepilogoRisposte').style.display = 'none';
+      document.getElementById('selezioneLinguaSimulazione').style.display = 'none';
+      document.getElementById('sezioneArticoli').style.display = 'block';
+      generaIndiceArticoli();
+      mostraArticolo(0);
+    }
+
+// ================== TTS (lettura vocale articoli) ==================
+(function setupTTS() {
+  if (!('speechSynthesis' in window)) {
+    // Browser senza TTS
+    const ctrl = document.getElementById('ttsControls');
+    if (ctrl) ctrl.style.display = 'none';
+    return;
+  }
+
+  const synth = window.speechSynthesis;
+  const btnPlay  = document.getElementById('ttsPlay');
+  const btnPause = document.getElementById('ttsPause');
+  const btnStop  = document.getElementById('ttsStop');
+  const selVoice = document.getElementById('ttsVoice');
+  const slRate   = document.getElementById('ttsRate');
+  const rateVal  = document.getElementById('ttsRateVal');
+
+  let currentUtter = null;
+  let voices = [];
+
+  function loadVoices() {
+    voices = synth.getVoices().filter(v => v.lang.startsWith('it'));
+    if (voices.length === 0) voices = synth.getVoices();
+
+    selVoice.innerHTML = voices.map((v, i) =>
+      `<option value="${i}">${v.name} (${v.lang})${v.default ? ' — predefinita' : ''}</option>`
+    ).join('');
+
+    const idxIt = voices.findIndex(v => v.lang.startsWith('it'));
+    if (idxIt >= 0) selVoice.value = String(idxIt);
+  }
+
+  // Alcuni browser caricano le voci in ritardo
+  loadVoices();
+  if (typeof synth.onvoiceschanged !== 'undefined') {
+    synth.onvoiceschanged = loadVoices;
+  }
+
+  function setButtons(state) {
+    // state: 'idle' | 'playing' | 'paused'
+    if (state === 'playing') {
+      btnPlay.textContent = '🔊 Legge...';
+      btnPlay.disabled = true;
+      btnPause.disabled = false;
+      btnStop.disabled = false;
+    } else if (state === 'paused') {
+      btnPlay.textContent = 'Riprendi';
+      btnPlay.disabled = false;
+      btnPause.disabled = false;
+      btnStop.disabled = false;
+    } else {
+      btnPlay.textContent = '🔊 Leggi';
+      btnPlay.disabled = false;
+      btnPause.disabled = true;
+      btnStop.disabled = true;
+    }
+  }
+
+  function speakArticle() {
+    const textEl = document.getElementById('testoArticolo');
+    if (!textEl) return;
+    const text = textEl.textContent.trim();
+    if (!text) return;
+
+    // Ferma eventuale lettura precedente
+    synth.cancel(); currentUtter = null;
+
+    const u = new SpeechSynthesisUtterance(text);
+    // Voce
+    const v = voices[Number(selVoice.value)] || voices[0];
+    if (v) u.voice = v;
+    // Parametri
+    u.lang = (v && v.lang) ? v.lang : 'it-IT';
+    u.rate = Number(slRate.value) || 1.0;
+    u.pitch = 1.0;
+
+    u.onstart = () => setButtons('playing');
+    u.onend   = () => setButtons('idle');
+    u.onerror = () => setButtons('idle');
+
+    currentUtter = u;
+    synth.speak(u);
+  }
+
+  btnPlay.addEventListener('click', () => {
+    if (synth.paused && currentUtter) {
+      synth.resume();
+      setButtons('playing');
+    } else {
+      speakArticle();
+    }
+  });
+
+  btnPause.addEventListener('click', () => {
+    if (synth.speaking && !synth.paused) {
+      synth.pause();
+      setButtons('paused');
+    }
+  });
+
+  btnStop.addEventListener('click', () => {
+    synth.cancel();
+    currentUtter = null;
+    setButtons('idle');
+  });
+
+  slRate.addEventListener('input', () => {
+    rateVal.textContent = `${Number(slRate.value).toFixed(1)}x`;
+    if (synth.speaking) {
+      synth.cancel();
+      speakArticle();
+    }
+  });
+
+  selVoice.addEventListener('change', () => {
+    if (synth.speaking) {
+      synth.cancel();
+      speakArticle();
+    }
+  });
+
+  // Se cambi articolo o esci dalla sezione, ferma la lettura
+  document.getElementById('prevArticolo')?.addEventListener('click', () => { synth.cancel(); setButtons('idle'); });
+  document.getElementById('nextArticolo')?.addEventListener('click', () => { synth.cancel(); setButtons('idle'); });
+  document.getElementById('tornaHomeDaArticoli')?.addEventListener('click', () => { synth.cancel(); setButtons('idle'); });
+
+  // Stato iniziale
+  setButtons('idle');
+})();
+
+    // --------------------- Percorsi (navigazione) ---------------------
+    let categoriePercorsi = Object.keys(percorsi);
+    let categoriaCorrente = null;
+    let percorsoCorrenteIndex = 0;
+
+    const sezionePercorsi = document.getElementById('sezionePercorsi');
+    const indiceCategoriePercorsi = document.getElementById('indiceCategoriePercorsi');
+    const indicePercorsi = document.getElementById('indicePercorsi');
+    const titoloPercorso = document.getElementById('titoloPercorso');
+    const listaTappe = document.getElementById('listaTappe');
+    const prevPercorsoBtn = document.getElementById('prevPercorso');
+    const nextPercorsoBtn = document.getElementById('nextPercorso');
+    const btnTornaCategorie = document.getElementById('btnTornaCategorie');
+    const tornaHomeDaPercorsiBtn = document.getElementById('tornaHomeDaPercorsi');
+    const navigazionePercorsiDiv = document.getElementById('navigazionePercorsi');
+    const contenutoPercorso = document.getElementById('contenutoPercorso');
+
+    function mostraMacroCategorie() {
+      indiceCategoriePercorsi.style.display = 'block';
+      indicePercorsi.style.display = 'none';
+      contenutoPercorso.style.display = 'none';
+      navigazionePercorsiDiv.style.display = 'none';
+      btnTornaCategorie.style.display = 'none';
+      titoloPercorso.textContent = '';
+      listaTappe.innerHTML = '';
+
+      indiceCategoriePercorsi.innerHTML = '';
+      categoriePercorsi.forEach(categoria => {
+        const btn = document.createElement('button');
+        btn.textContent = categoria.replace(/_/g, ' ');
+        btn.style.display = 'block';
+        btn.style.marginBottom = '5px';
+        btn.style.width = '100%';
+        btn.style.textAlign = 'left';
+        btn.onclick = () => { categoriaCorrente = categoria; mostraPercorsiCategoria(categoria); };
+        indiceCategoriePercorsi.appendChild(btn);
+      });
+    }
+
+    function mostraPercorsiCategoria(categoria) {
+      indiceCategoriePercorsi.style.display = 'none';
+      indicePercorsi.style.display = 'block';
+      contenutoPercorso.style.display = 'none';
+      navigazionePercorsiDiv.style.display = 'none';
+      btnTornaCategorie.style.display = 'block';
+      titoloPercorso.textContent = '';
+      listaTappe.innerHTML = '';
+
+      indicePercorsi.innerHTML = '';
+     percorsi[categoria].forEach((percorso, index) => {
+  const btn = document.createElement('button');
+  btn.textContent = percorso.nomePercorso;
+  btn.style.display = 'block';
+  btn.style.marginBottom = '3px';
+  btn.style.width = '100%';
+  btn.style.textAlign = 'left';
+  // Passiamo SOLO l’indice; dentro rileggeremo l’oggetto completo (con coords) da window.percorsi
+  btn.onclick = () => { mostraDettaglioPercorso(index); };
+  indicePercorsi.appendChild(btn);
+});
+    }
+
+   function mostraDettaglioPercorso(index) {
+// Rileggi SEMPRE l'oggetto completo dal sorgente globale
+const elenco = percorsi[categoriaCorrente] || [];
+const percorso = elenco[index];
+if (!percorso) {
+  console.warn('Percorso non trovato per indice', index, 'in categoria', categoriaCorrente);
+  clearPercorsoOverlay();
+  try { osdViewer?.viewport.goHome(true); } catch(_) {}
+  return;
+}
+  titoloPercorso.textContent = `${categoriaCorrente.replace(/_/g, ' ')} — ${percorso.nomePercorso}`;
+  listaTappe.innerHTML = '';
+
+  // tappe
+  percorso.tappe.forEach(tappa => {
+    const li = document.createElement('li');
+    li.textContent = tappa;
+    listaTappe.appendChild(li);
+// DEBUG + conteggio punti
+console.log('[renderPercorso] selezionato:', percorso.nomePercorso);
+const _nCoords = Array.isArray(percorso.coords) ? percorso.coords.length
+                : Array.isArray(percorso.puntiMappa) ? percorso.puntiMappa.length
+                : Array.isArray(percorso.punti) ? percorso.punti.length : 0;
+console.log('[renderPercorso] numero punti:', _nCoords);
+  });
+
+// --- viewer mappa + disegno percorso ---
+const cap = document.getElementById('didascaliaPercorso');
+if (cap) cap.textContent = percorso.caption || '';
+showPercorsoOnMap(percorso);
+
+  contenutoPercorso.style.display = 'block';
+  navigazionePercorsiDiv.style.display = 'block';
+  indicePercorsi.style.display = 'none';
+
+  percorsoCorrenteIndex = index;
+  aggiornaBottoniNavigazione();
+}
+
+    function aggiornaBottoniNavigazione() {
+      const percorsiCategoria = percorsi[categoriaCorrente];
+      prevPercorsoBtn.disabled = percorsoCorrenteIndex <= 0;
+      nextPercorsoBtn.disabled = percorsoCorrenteIndex >= percorsiCategoria.length - 1;
+    }
+
+prevPercorsoBtn.onclick = () => {
+  if (percorsoCorrenteIndex > 0) {
+    mostraDettaglioPercorso(percorsoCorrenteIndex - 1);
+  }
+};
+nextPercorsoBtn.onclick = () => {
+  if (percorsoCorrenteIndex < percorsi[categoriaCorrente].length - 1) {
+    mostraDettaglioPercorso(percorsoCorrenteIndex + 1);
+  }
+};
+    btnTornaCategorie.onclick = () => { mostraMacroCategorie(); };
+    tornaHomeDaPercorsiBtn.onclick = () => {
+      sezionePercorsi.style.display = 'none';
+      document.getElementById('home').style.display = 'block';
+    };
+
+    function mostraSezionePercorsi() {
+      document.getElementById('home').style.display = 'none';
+      document.getElementById('quiz').style.display = 'none';
+      document.getElementById('esercitazione').style.display = 'none';
+      document.getElementById('risultati').style.display = 'none';
+      document.getElementById('riepilogoRisposte').style.display = 'none';
+      document.getElementById('selezioneLinguaSimulazione').style.display = 'none';
+      document.getElementById('sezioneArticoli').style.display = 'none';
+      sezionePercorsi.style.display = 'block';
+      mostraMacroCategorie();
+    }
+
+// ====== Documenti PDF ======
+const DOCUMENTI = [
+  {
+    id: 'geo-milano',
+    titolo: 'Tutta Geografia e Milano',
+    file: 'Tutta-Geografia-e-Milano.pdf',
+    categoria: 'Geografia'
+  },
+  {
+    id: 'piazze-milano',
+    titolo: 'Piazze di Milano',
+    file: 'Piazze-Di-Milano.pdf',
+    categoria: 'Percorsi'
+  },
+  {
+    id: 'piazze-convergenze',
+    titolo: 'Piazze — Convergenze Percorsi',
+    file: 'Piazze-Convergenze-Percorsi.pdf',
+    categoria: 'Percorsi'
+  }
+];
+
+function openDocumenti() {
+  hideAllSections();
+  renderDocumenti(DOCUMENTI);
+  document.getElementById('sezioneDocumenti').style.display = 'block';
+}
+
+function chiudiDocumenti() {
+  document.getElementById('sezioneDocumenti').style.display = 'none';
+  document.getElementById('home').style.display = 'block';
+}
+
+function renderDocumenti(list) {
+  const wrap = document.getElementById('docList');
+  const prev = document.getElementById('docPreview');
+  wrap.innerHTML = '';
+  prev.style.display = 'none';
+
+  if (!list.length) {
+    wrap.innerHTML = '<p>Nessun documento trovato.</p>';
+    return;
+  }
+
+ list.forEach(d => {
+  const fileUrl = 'pdfs/' + encodeURIComponent(d.file);   // <-- URL sicuro
+  const card = document.createElement('div');
+  card.style.cssText =
+    'border:1px solid #e2e2e2;border-radius:12px;padding:12px;background:#fff;' +
+    'box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;flex-direction:column;gap:8px;';
+  card.innerHTML = `
+    <div style="font-weight:600">${escapeHtml(d.titolo)}</div>
+    <div style="font-size:12px;color:#666">${d.categoria ? escapeHtml(d.categoria) : ''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="padding:8px 12px" onclick="previewDoc('${d.id}')">Anteprima</button>
+      <a class="btn" style="padding:8px 12px;background:#6c757d" href="${fileUrl}" target="_blank" rel="noopener">Apri</a>
+      <a class="btn" style="padding:8px 12px;background:#6c757d" href="${fileUrl}" download>Scarica</a>
+    </div>
+  `;
+  wrap.appendChild(card);
+});
+}
+
+function filterDocs(q) {
+  const term = (q || '').toLowerCase().trim();
+  if (!term) { renderDocumenti(DOCUMENTI); return; }
+  const filtered = DOCUMENTI.filter(d =>
+    d.titolo.toLowerCase().includes(term) ||
+    (d.categoria||'').toLowerCase().includes(term) ||
+    d.file.toLowerCase().includes(term)
+  );
+  renderDocumenti(filtered);
+}
+
+function previewDoc(id) {
+  const d = DOCUMENTI.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('docTitle').textContent = d.titolo;
+
+  const fileUrl = 'pdfs/' + encodeURIComponent(d.file);
+  const f = document.getElementById('docFrame');
+
+  // bust cache in sviluppo
+  f.src = fileUrl + (fileUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  document.getElementById('docPreview').style.display = 'block';
+}
+
+function hideAllSections() {
+  ['home','quiz','esercitazione','risultati','riepilogoRisposte',
+   'selezioneLinguaSimulazione','sezioneArticoli','sezionePercorsi',
+   'sezioneDocumenti','sezioneConfluenze']  // ← aggiunto
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ====== Controller Confluenze ======
+function openConfluenze() {
+  hideAllSections();
+  // popola select piazze
+  const sel = document.getElementById('selPiazza');
+  sel.innerHTML = (window.CONFLUENZE || []).map((c,i)=>`<option value="${i}">${escapeHtml(c.piazza)}</option>`).join('');
+  document.getElementById('sezioneConfluenze').style.display = 'block';
+  renderConfluenzeStudio();
+}
+
+function filterPiazze(q) {
+  const sel = document.getElementById('selPiazza');
+  const term = (q || '').toLowerCase().trim();
+  const data = window.CONFLUENZE || [];
+  
+  sel.innerHTML = data
+    .map((c, i) => ({ name: c.piazza, i }))
+    .filter(p => !term || p.name.toLowerCase().includes(term))
+    .map(p => `<option value="${p.i}">${escapeHtml(p.name)}</option>`)
+    .join('');
+
+  // Se il filtro ha risultati, mostra subito il primo
+  if (sel.options.length > 0) {
+    sel.value = sel.options[0].value;
+    renderConfluenzeStudio();
+  } else {
+    document.getElementById('confPiazzaTitle').textContent = 'Nessuna piazza trovata';
+    document.getElementById('confLista').innerHTML = '';
+  }
+}
+
+function renderConfluenzeStudio() {
+  const data = window.CONFLUENZE || [];
+  if (!data.length) return;
+  const idx = +document.getElementById('selPiazza').value || 0;
+  const entry = data[idx];
+  document.getElementById('confPiazzaTitle').textContent = entry.piazza;
+  document.getElementById('confLista').innerHTML = entry.strade.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+  
+  // reset test
+  document.getElementById('confTest').style.display = 'none';
+  document.getElementById('confEsito').innerHTML = '';
+  document.getElementById('confInput').value = '';
+  
+  // 🔹 Mostra di nuovo lo studio quando si cambia piazza
+  showStudioAgain();
+}
+
+let _confCorrente = null;
+
+function startConfluenzeTest() {
+  const idx = +document.getElementById('selPiazza').value || 0;
+  _confCorrente = (window.CONFLUENZE || [])[idx];
+  setupTestUI();
+}
+function startConfluenzeTestRandom() {
+  const arr = window.CONFLUENZE || [];
+  if (!arr.length) return;
+  const idx = Math.floor(Math.random() * arr.length);
+  document.getElementById('selPiazza').value = String(idx);
+  _confCorrente = arr[idx];
+  setupTestUI();
+}
+function setupTestUI() {
+  if (!_confCorrente) return;
+
+  // 🔹 Nasconde la parte di studio (lista e select)
+  document.getElementById('confStudio').style.display = 'none';
+  document.getElementById('selPiazza').disabled = true;
+
+  // 🔹 Mostra la parte del test
+  document.getElementById('confTest').style.display = 'block';
+  document.getElementById('confTestTitle').textContent = `Test: ${_confCorrente.piazza}`;
+  document.getElementById('confInput').value = '';
+  document.getElementById('confEsito').innerHTML = '';
+}
+function svuotaRisposta() {
+  document.getElementById('confInput').value = '';
+  document.getElementById('confEsito').innerHTML = '';
+}
+function riempiConSuggerimenti() {
+  if (!_confCorrente) return;
+  const half = Math.ceil(_confCorrente.strade.length/2);
+  const arr = shuffleArray(_confCorrente.strade).slice(0, half);
+  document.getElementById('confInput').value = arr.join(', ');
+}
+function mostraSoluzione() {
+  if (!_confCorrente) return;
+  const sol = _confCorrente.strade.join(', ');
+  document.getElementById('confEsito').innerHTML = `<div style="margin-top:8px"><b>Soluzione:</b> ${escapeHtml(sol)}</div>`;
+}
+function nuovoTestStessa() {
+  if (!_confCorrente) return;
+  showStudioAgain(); // mostra di nuovo la sezione studio
+  setupTestUI();
+}
+
+function showStudioAgain() {
+  document.getElementById('confStudio').style.display = 'block';
+  document.getElementById('selPiazza').disabled = false;
+  document.getElementById('confTest').style.display = 'none';
+}
+
+function tornaAlloStudio() {
+  // mostra di nuovo la lista + abilita la select
+  showStudioAgain();
+  // porta lo scroll sulla lista
+  const anchor = document.getElementById('confStudio');
+  if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// --- Normalizzazione + alias ---
+function normStr(s) {
+  return String(s)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // accenti
+    .replace(/[\.\-–—']/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function applyAlias(entry, nome) {
+  const key = normStr(nome);
+  const aliases = entry.alias || {};
+  for (const [k,v] of Object.entries(aliases)) {
+    if (normStr(k) === key) return v;
+  }
+  return nome.trim();
+}
+
+function correggiConfluenze() {
+  if (!_confCorrente) return;
+  // input → array
+  let proposti = (document.getElementById('confInput').value || '')
+    .split(',')
+    .map(s=>s.trim())
+    .filter(Boolean)
+    .map(n => applyAlias(_confCorrente, n));
+
+  const target = _confCorrente.strade.map(s=>s.trim());
+  const N = new Set(target.map(normStr));
+
+  const giusti = [];
+  const extra  = [];
+  const P = proposti.map(x=>({raw:x, n:normStr(x)}));
+  P.forEach(p => (N.has(p.n) ? giusti : extra).push(p.raw));
+
+  const mancanti = target.filter(t => !P.some(p => normStr(t)===p.n));
+  const score = Math.max(0, Math.round(100 * giusti.length / target.length));
+
+  const out = [];
+  out.push(`<div><b>Punteggio:</b> ${score}/100</div>`);
+  out.push(`<div><b>Corrette (${giusti.length}/${target.length}):</b> ${giusti.map(escapeHtml).join(', ') || '—'}</div>`);
+  out.push(`<div><b>Mancanti (${mancanti.length}):</b> ${mancanti.map(escapeHtml).join(', ') || '—'}</div>`);
+  out.push(`<div><b>Extra (${extra.length}):</b> ${extra.map(escapeHtml).join(', ') || '—'}</div>`);
+  document.getElementById('confEsito').innerHTML = out.join('');
+}
+
+// util
+function shuffleArray(a){
+  const arr = a.slice();
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+    // ------------------------- Login (PBKDF2) -------------------------
+    function bufToHex(buffer) { return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+    function hexToBuf(hex) { const bytes = new Uint8Array(hex.length / 2); for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i*2,2),16); return bytes.buffer; }
+    async function deriveHex(password, saltHex, iterations=200000, keyLen=32) {
+      const enc = new TextEncoder();
+      const passKey = await crypto.subtle.importKey('raw', enc.encode(password), {name:'PBKDF2'}, false, ['deriveBits']);
+      const derived = await crypto.subtle.deriveBits(
+        {name:'PBKDF2', salt: hexToBuf(saltHex), iterations, hash:'SHA-256'},
+        passKey,
+        keyLen * 8
+      );
+      return bufToHex(derived);
+    }
+    function findUser(email) { if (!window.USERS) return null; return window.USERS.find(u => u.email.toLowerCase() === email.toLowerCase()); }
+    function setSession(userEmail) { const sess = { email: userEmail, token: btoa(Math.random().toString(36)+Date.now()), ts: Date.now() }; localStorage.setItem('myapp_session', JSON.stringify(sess)); }
+    function clearSession() { localStorage.removeItem('myapp_session'); }
+    function getSession() { try { return JSON.parse(localStorage.getItem('myapp_session') || 'null'); } catch(e){ return null; } }
+    const MAX_FAILS = 6; const LOCK_MIN = 2;
+    function incFail() { const k='login_fails'; const v = Number(sessionStorage.getItem(k) || 0) + 1; sessionStorage.setItem(k, String(v)); if (v >= MAX_FAILS) { const until = Date.now() + LOCK_MIN*60*1000; sessionStorage.setItem('login_lock_until', String(until)); } }
+    function isLocked() { const until = Number(sessionStorage.getItem('login_lock_until') || 0); return Date.now() < until; }
+    function resetFails() { sessionStorage.removeItem('login_fails'); sessionStorage.removeItem('login_lock_until'); }
+
+    (function setupLogin(){
+      const overlay = document.getElementById('loginOverlay');
+      const loginBtn = document.getElementById('loginBtn');
+      const emailEl = document.getElementById('loginEmail');
+      const passEl = document.getElementById('loginPassword');
+      const msgEl = document.getElementById('loginMsg');
+
+      const sess = getSession();
+      if (sess && sess.email) {
+        const maxAge = 8 * 60 * 60 * 1000;
+        if (Date.now() - sess.ts < maxAge) {
+          overlay.style.display = 'none';
+        } else {
+          clearSession();
+        }
+      }
+
+      if (isLocked()) {
+        const until = Number(sessionStorage.getItem('login_lock_until'));
+        const sec = Math.ceil((until - Date.now())/1000);
+        msgEl.textContent = `Troppi tentativi. Riprova tra ${Math.ceil(sec/60)} minuti.`;
+        loginBtn.disabled = true;
+      }
+
+      loginBtn.addEventListener('click', async () => {
+        if (isLocked()) { msgEl.textContent = 'Account bloccato temporaneamente.'; return; }
+        const email = emailEl.value.trim();
+        const pass = passEl.value;
+        msgEl.style.color = '#b00';
+        msgEl.textContent = '';
+
+        if (!email || !pass) { msgEl.textContent = 'Inserisci email e password.'; return; }
+        const user = findUser(email);
+        if (!user) { incFail(); msgEl.textContent = 'Credenziali non valide.'; return; }
+
+        msgEl.style.color = '#666';
+        msgEl.textContent = 'Verifico... attendere.';
+        try {
+          const hashHex = await deriveHex(pass, user.salt, 200000, 32);
+          if (hashHex === user.hash) {
+            setSession(user.email); resetFails(); overlay.style.display = 'none'; msgEl.textContent = '';
+          } else { incFail(); msgEl.textContent = 'Credenziali non valide.'; }
+        } catch (e) { console.error(e); msgEl.textContent = 'Errore interno (derivazione).'; }
+      });
+
+      passEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
+    })();
+
+function logout() {
+  localStorage.removeItem('myapp_session');
+  sessionStorage.removeItem('login_fails');
+  sessionStorage.removeItem('login_lock_until');
+  location.reload();
+}
+
+// ---- Lightbox helpers ----
+function openLightbox(src, caption) {
+  const lb = document.getElementById('imgLightbox');
+  const img = document.getElementById('imgLightboxSrc');
+  const cap = document.getElementById('imgLightboxCaption');
+
+  img.src = src;
+  cap.textContent = caption || '';
+  lb.style.display = 'block';
+  document.body.classList.add('lb-open');
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('imgLightbox');
+  const img = document.getElementById('imgLightboxSrc');
+  lb.style.display = 'none';
+  document.body.classList.remove('lb-open');
+  img.removeAttribute('src'); // libera memoria
+}
+
+function bindLightbox() {
+  const lb = document.getElementById('imgLightbox');
+  if (!lb) return; // HTML non presente
+
+  const closeBtn = lb.querySelector('.lb-close');
+  const backdrop = lb.querySelector('.lb-backdrop');
+  if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+  if (backdrop)  backdrop.addEventListener('click', closeLightbox);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lb.style.display === 'block') closeLightbox();
+  });
+}
+window.addEventListener('DOMContentLoaded', bindLightbox);
+  </script>
+<!-- Lightbox immagine percorso -->
+<div id="imgLightbox" style="display:none;">
+  <div class="lb-backdrop"></div>
+  <div class="lb-content">
+    <button class="lb-close" aria-label="Chiudi">✕</button>
+    <img id="imgLightboxSrc" alt="Illustrazione del percorso ingrandita">
+    <div id="imgLightboxCaption" class="lb-caption"></div>
+  </div>
+</div>
+</body>
+</html>
