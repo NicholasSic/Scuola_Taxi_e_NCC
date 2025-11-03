@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Quiz NCC/Taxi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body {
@@ -135,15 +136,38 @@
 
 /* Percorsi: pagina più larga e colonna immagine più ampia */
 .percorso-layout { grid-template-columns: 1.2fr 3.8fr; }
-.img-percorso {
-  display: none;
-  width: 100%;
-  min-width: 560px;     /* aumento la larghezza minima */
-  max-height: 72vh;     /* non supera ~72% dell’altezza schermo */
-  height: auto;
-  object-fit: contain;  /* mantiene proporzioni senza tagliare */
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  .img-percorso {
+    display: none;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  }
+# Responsive styles
+@media (max-width: 600px) {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .percorso-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .img-percorso {
+    display: block;
+  }
+
+  #sezionePercorsi {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+  }
+
+  button, input {
+    font-size: 16px !important;
+  }
 }
 
 /* ---- Lightbox immagine percorso ---- */
