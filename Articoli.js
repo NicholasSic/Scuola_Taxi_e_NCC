@@ -37,7 +37,7 @@ const tuttiGliArticoli = [
 {
   "numeroArticolo": "ART. 10",
   "titolo": "Condizioni per la trasferibilità della licenza di esercizio Taxi",
-  "testo": "La licenza di esercizio può essere trasferita ad altro soggetto in possesso dei requisiti necessari quando il titolare di licenza si trova in una di queste caratteristiche:\n- Sia in possesso della licenza da almeno 5 anni\n- Aver raggiunto il 60 anno di età\n- In caso di inabilità permanente da malattia o infortunio o per ritiro permanente della patente di guida\n\nIl soggetto designato può acquisire la titolarità della licenza laddove:\n- Sia in possesso dei requisiti necessari (lettere B, C, D, E, F dell'art. 9)\n- Non essere stato titolare di licenza taxi o autorizzazione NCC nel quinquennio precedente"
+  "testo": "La licenza di esercizio può essere trasferita ad altro soggetto in possesso dei requisiti necessari quando il titolare di licenza si trova in una di queste caratteristiche:\n- Sia in possesso della licenza da almeno 5 anni\n- Aver raggiunto il 60 anno di età\n- In caso di inabilità permanente da malattia o infortunio o per ritiro permanente della patente di guida\n\nIl soggetto designato può acquisire la titolarità della licenza laddove:\n- Sia in possesso dei requisiti necessari (lettere B, C, D, E, G dell'art. 9)\n- Non essere stato titolare di licenza taxi o autorizzazione NCC nel quinquennio precedente"
 },
 {
   "numeroArticolo": "ART. 11",
