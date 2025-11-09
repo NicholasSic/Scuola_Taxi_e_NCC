@@ -5881,7 +5881,7 @@ const tutteLeDomande = [
   },
   {
     "argomento": "REGOLAMENTO",
-    "domanda": "Gli incaricati della sorveglianza devono ritirare la licenza d'esercizio quando accertino, tra l'altro, che: (art. 31)",
+    "domanda": "Gli incaricati della sorveglianza devono ritirare la licenza d'esercizio quando accertino, tra l'altro, che: (art. 37)",
     "risposte": [
       "l'autopubblica è in circolazione senza aver ottemperato\nall' obbligo di presentarsi alla visita straordinaria di controllo",
       "il titolare abbia manomesso il tassametro al fine di alterarne il funzionamento",
