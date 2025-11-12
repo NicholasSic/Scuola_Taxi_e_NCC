@@ -676,7 +676,7 @@ window.percorsi.PARTENZE_DUOMO = [
   [0.180608, 0.060144],
   [0.150707, 0.031357],
   [0.135908, 0.018645]
-],
+]
 },
     {
   "nomePercorso": "MALPENSA ALTERNATIVA DA A4 DIREZIONE TORINO",
