@@ -627,7 +627,6 @@ window.percorsi.PARTENZE_DUOMO = [
     "Troviamo Terminal 2 e poi Terminal 1"
   ],
   coords: [
-  [
   [0.606658, 0.599405],
   [0.606484, 0.580799],
   [0.60124, 0.576255],
@@ -677,8 +676,7 @@ window.percorsi.PARTENZE_DUOMO = [
   [0.180608, 0.060144],
   [0.150707, 0.031357],
   [0.135908, 0.018645]
-]
-]
+],
 },
     {
   "nomePercorso": "MALPENSA ALTERNATIVA DA A4 DIREZIONE TORINO",
