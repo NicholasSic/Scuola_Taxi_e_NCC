@@ -25,8 +25,8 @@ window.USERS = [
   hash: "d98a84d2ad2a9e2ac4f752750ab8470c74e0d96d9855544f552d2c27ebe091c9"
 },
   {
-  "email": "Francy",
-  "salt": "4b78c753a71b020c4b23fd4997a1ee87",
-  "hash": "8b8950b4a29200ba437ce193e5b432f2d4e64608cf9f789fbd92442fb0f2bd80"
+  email: "Francy",
+  salt: "4b78c753a71b020c4b23fd4997a1ee87",
+  hash: "8b8950b4a29200ba437ce193e5b432f2d4e64608cf9f789fbd92442fb0f2bd80"
 }
 ];
